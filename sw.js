@@ -1,4 +1,4 @@
-const CACHE = "jidelnicek-v5";
+const CACHE = "jidelnicek-v6";
 
 // věci, které chceme mít i offline hned po instalaci
 const CORE = [
@@ -11,17 +11,13 @@ const CORE = [
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(CORE))
-  );
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(CORE)));
 });
 
 self.addEventListener("activate", (e) => {
   e.waitUntil((async () => {
-    // smaž staré cache
     const keys = await caches.keys();
     await Promise.all(keys.map(k => (k === CACHE ? null : caches.delete(k))));
-    // převezmi kontrolu nad otevřenými taby hned
     await self.clients.claim();
   })());
 });
@@ -43,9 +39,8 @@ async function networkFirst(request) {
     const fresh = await fetch(request, { cache: "no-store" });
     if (fresh && fresh.ok) cache.put(request, fresh.clone());
     return fresh;
-  } catch (err) {
-    const cached = await cache.match(request);
-    return cached || Response.error();
+  } catch {
+    return (await cache.match(request)) || Response.error();
   }
 }
 
@@ -65,7 +60,7 @@ async function staleWhileRevalidate(request) {
 self.addEventListener("fetch", (e) => {
   const req = e.request;
 
-  // bereme jen GET a jen vlastní origin (ať necachujeme Firebase/CDN)
+  // jen GET a jen vlastní origin
   if (req.method !== "GET") return;
   if (!sameOrigin(req)) return;
 
