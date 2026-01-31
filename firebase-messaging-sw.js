@@ -4,12 +4,12 @@ importScripts("https://www.gstatic.com/firebasejs/10.12.4/firebase-messaging-com
 
 // VLOŽ STEJNÝ firebaseConfig jako v index.html
 firebase.initializeApp({
-  apiKey: "VLOZ_API_KEY",
-  authDomain: "VLOZ_AUTH_DOMAIN",
-  projectId: "VLOZ_PROJECT_ID",
-  storageBucket: "VLOZ_STORAGE_BUCKET",
-  messagingSenderId: "VLOZ_SENDER_ID",
-  appId: "VLOZ_APP_ID"
+  apiKey: "AIzaSyB-L0KiCxpjQurF6erkUaGZHLGAcTrISaI",
+  authDomain: "jidelnicek-81c42.firebaseapp.com",
+  projectId: "jidelnicek-81c42",
+  storageBucket: "jidelnicek-81c42.firebasestorage.app",
+  messagingSenderId: "295816254355",
+  appId: "1:295816254355:web:929a497c6439852e198e66"
 });
 
 const messaging = firebase.messaging();
