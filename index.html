@@ -69,7 +69,15 @@
   <!-- Firebase (modulové SDK) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+   import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithRedirect,
+  getRedirectResult,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+
     import {
       getFirestore, doc, getDoc, setDoc, serverTimestamp,
       collection, getDocs, query, orderBy
@@ -109,6 +117,8 @@ const firebaseConfig = {
     const elBtnExportMonth = document.getElementById("btnExportMonth");
     const elBtnEnableNotif = document.getElementById("btnEnableNotif");
     const elBtnReminders = document.getElementById("btnReminders");
+const elBtnLogin = document.getElementById("btnLogin");
+const elBtnLogout = document.getElementById("btnLogout");
 
     const elHintIOS = document.getElementById("hintIOS");
 
@@ -627,29 +637,58 @@ const firebaseConfig = {
     remSave.addEventListener("click", saveReminders);
     remBack.addEventListener("click", (e)=>{ if(e.target===remBack) remBack.style.display="none"; });
 
-    // ---- Auth + init
-    setStatus("Přihlašuji…");
-    signInAnonymously(auth);
+const provider = new GoogleAuthProvider();
+// volitelně vynutí výběr účtu:
+provider.setCustomParameters({ prompt: "select_account" });
 
-    onAuthStateChanged(auth, async (u)=>{
-      if(!u) return;
-      uid = u.uid;
-      setStatus("Načítám…");
+async function ensureGoogleLogin(){
+  // zpracuj návrat z redirectu (když uživatel přihlašoval)
+  try { await getRedirectResult(auth); } catch(e) { /* ignore */ }
 
-      // hint for iOS
-      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-      elHintIOS.style.display = isIOS ? "block" : "none";
+  if(!auth.currentUser){
+    // když není přihlášen, nabídni login
+    setStatus("Nepřihlášeno");
+  } else {
+    setStatus("Přihlášeno");
+  }
+}
 
-      // default range
-      const r = dateRangeDefault(elRange.value);
-      elFrom.value = r.from;
-      elTo.value = r.to;
+elBtnLogin.addEventListener("click", async ()=>{
+  await signInWithRedirect(auth, provider);
+});
 
-      await registerAppSW();
-      await loadAllDays();
-      await setupOnMessage();
-      handleDeepLink();
-    });
+elBtnLogout.addEventListener("click", async ()=>{
+  await signOut(auth);
+});
+
+await ensureGoogleLogin();
+
+onAuthStateChanged(auth, async (u)=>{
+  if(!u){
+    uid = null;
+    setStatus("Nepřihlášeno – klikni Přihlásit Google");
+    return;
+  }
+
+  // extra pojistka: povol jen konkrétní email (UI)
+  if(u.email !== "jendabernard@gmail.com"){
+    alert("Tento účet nemá přístup.");
+    await signOut(auth);
+    return;
+  }
+
+  uid = u.uid;
+  setStatus("Načítám…");
+
+  // dál už tvoje init věci:
+  await registerAppSW();
+  await loadAllDays();
+  await setupOnMessage();
+  handleDeepLink();
+
+  setStatus("OK");
+});
+
 
   </script>
 </head>
@@ -673,6 +712,9 @@ const firebaseConfig = {
           <div class="row" style="justify-content:flex-end">
             <button id="btnToday" class="primary">+ Zapsat dnes</button>
             <button id="btnEnableNotif" class="primary">Povolit oznámení</button>
+            <button id="btnLogin" class="primary">Přihlásit Google</button>
+<button id="btnLogout" class="primary">Odhlásit</button>
+
             <button id="btnReminders" class="primary">Připomínky</button>
           </div>
         </div>
