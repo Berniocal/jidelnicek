@@ -74,6 +74,10 @@
   GoogleAuthProvider,
   signInWithRedirect,
   getRedirectResult,
+     console.warn("Redirect error:", e.code, e.message);
+alert("Redirect error: " + e.code);
+
+     console.log("currentUser after redirect:", auth.currentUser?.email);
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
