@@ -125,7 +125,18 @@ const elBtnLogout = document.getElementById("btnLogout");
 
     const elHintIOS = document.getElementById("hintIOS");
 
-    // Full editor overlay
+    
+
+// ---- initial date range (aby tabulka nebyla prázdná po startu)
+// default je týden: od pondělí do neděle
+try{
+  const init = dateRangeDefault(elRange.value || "week");
+  elFrom.value = init.from;
+  elTo.value = init.to;
+}catch(e){
+  // ignore
+}
+// Full editor overlay
     const fullBack = document.getElementById("fullBack");
     const fullSave = document.getElementById("fullSave");
     const fullClose = document.getElementById("fullClose");
