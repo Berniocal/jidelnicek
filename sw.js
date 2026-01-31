@@ -1,4 +1,4 @@
-const CACHE = "jidelnicek-v1";
+const CACHE = "jidelnicek-v2";
 const ASSETS = [
   "./",
   "./index.html",
