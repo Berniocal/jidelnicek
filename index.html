@@ -74,12 +74,11 @@
   GoogleAuthProvider,
   signInWithRedirect,
   getRedirectResult,
-  console.warn("Redirect error:", e.code, e.message);
-alert("Redirect error: " + e.code);
-
-     console.log("currentUser after redirect:", auth.currentUser?.email);
   onAuthStateChanged,
-  signOut
+  signOut,
+  signInWithPopup,
+  setPersistence,
+  browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
     import {
@@ -95,7 +94,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyB-L0KiCxpjQurF6erkUaGZHLGAcTrISaI",
   authDomain: "jidelnicek-81c42.firebaseapp.com",
   projectId: "jidelnicek-81c42",
-  storageBucket: "jidelnicek-81c42.firebasestorage.app",
+  storageBucket: "jidelnicek-81c42.appspot.com",
   messagingSenderId: "295816254355",
   appId: "1:295816254355:web:929a497c6439852e198e66"
 };
@@ -641,31 +640,40 @@ const elBtnLogout = document.getElementById("btnLogout");
     remSave.addEventListener("click", saveReminders);
     remBack.addEventListener("click", (e)=>{ if(e.target===remBack) remBack.style.display="none"; });
 
+// =========================
+// Google login (jen tvůj účet)
+// =========================
+await setPersistence(auth, browserLocalPersistence);
+
 const provider = new GoogleAuthProvider();
-// volitelně vynutí výběr účtu:
 provider.setCustomParameters({ prompt: "select_account" });
 
-async function ensureGoogleLogin(){
-  // zpracuj návrat z redirectu (když uživatel přihlašoval)
-  try { await getRedirectResult(auth); } catch(e) { /* ignore */ }
-
-  if(!auth.currentUser){
-    // když není přihlášen, nabídni login
-    setStatus("Nepřihlášeno");
-  } else {
-    setStatus("Přihlášeno");
+// 1) Pokud se uživatel právě vrací z redirectu, tady se to zpracuje
+try {
+  const res = await getRedirectResult(auth);
+  if(res && res.user){
+    console.log("Redirect OK:", res.user.email);
   }
+} catch(e){
+  console.warn("Redirect error:", e?.code, e?.message);
+  alert("Přihlášení selhalo: " + (e?.code || e));
 }
 
+// Login tlačítko: na PC zkus popup, když to nejde → redirect
 elBtnLogin.addEventListener("click", async ()=>{
-  await signInWithRedirect(auth, provider);
+  try{
+    await signInWithPopup(auth, provider);
+  }catch(e){
+    console.warn("Popup failed, falling back to redirect:", e?.code, e?.message);
+    await signInWithRedirect(auth, provider);
+  }
 });
 
 elBtnLogout.addEventListener("click", async ()=>{
   await signOut(auth);
 });
 
-await ensureGoogleLogin();
+setStatus("Nepřihlášeno – klikni Přihlásit Google");
 
 onAuthStateChanged(auth, async (u)=>{
   if(!u){
@@ -674,17 +682,17 @@ onAuthStateChanged(auth, async (u)=>{
     return;
   }
 
-  // extra pojistka: povol jen konkrétní email (UI)
-  if(u.email !== "jendabernard@gmail.com"){
-    alert("Tento účet nemá přístup.");
+  // pojistka: povol jen konkrétní email
+  const email = (u.email || "").toLowerCase();
+  if(email !== "jendabernard@gmail.com"){
+    alert("Tento účet nemá přístup: " + (u.email || ""));
     await signOut(auth);
     return;
   }
 
   uid = u.uid;
-  setStatus("Načítám…");
+  setStatus("Přihlášeno – načítám…");
 
-  // dál už tvoje init věci:
   await registerAppSW();
   await loadAllDays();
   await setupOnMessage();
@@ -692,9 +700,7 @@ onAuthStateChanged(auth, async (u)=>{
 
   setStatus("OK");
 });
-
-
-  </script>
+</script>
 </head>
 
 <body>
