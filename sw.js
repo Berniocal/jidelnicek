@@ -1,4 +1,4 @@
-const CACHE = "jidelnicek-v6";
+const CACHE = "jidelnicek-v8";
 
 // věci, které chceme mít i offline hned po instalaci
 const CORE = [
